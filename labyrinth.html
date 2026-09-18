@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабіринт умов — квест з умовних операторів</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #14182B;
+            --surface: #1C2242;
+            --surface-2: #232B52;
+            --border: #323B66;
+            --text: #E7EAF6;
+            --text-mute: #98A1C4;
+            --teal: #3FB6CC;
+            --teal-dim: #274a58;
+            --amber: #F0AE4C;
+            --amber-dim: #4a3a21;
+            --danger: #E8697A;
+            --danger-dim: #4a2430;
+            --good: #4fd18a;
+            --good-dim: #1f4a37;
+            --font-display: 'JetBrains Mono', ui-monospace, monospace;
+            --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-body);
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: var(--font-display);
+            margin: 0;
+            color: var(--text);
+        }
+
+        .wrap {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+        }
+
+        .hud {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-bottom: 28px;
+        }
+
+        .hud__top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .hud__title {
+            font-size: 18px;
+        }
+
+        .hud__xp {
+            font-family: var(--font-display);
+            font-size: 14px;
+            color: var(--amber);
+            font-weight: 700;
+        }
+
+        .path {
+            list-style: none;
+            margin: 0;
+            padding: 6px 2px;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            overflow-x: auto;
+        }
+
+        .path li {
+            flex: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-display);
+            font-size: 11.5px;
+            color: var(--text-mute);
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            cursor: default;
+            white-space: nowrap;
+        }
+
+        .path li.clickable {
+            cursor: pointer;
+        }
+
+        .path li.clickable:hover {
+            border-color: var(--teal);
+            color: var(--text);
+        }
+
+        .path li.is-current {
+            border-color: var(--teal);
+            color: var(--text);
+            background: var(--teal-dim);
+            font-weight: 700;
+        }
+
+        .path li.is-done {
+            color: var(--good);
+            border-color: var(--good);
+        }
+
+        .path li.is-locked {
+            opacity: .5;
+        }
+
+        .path .connector {
+            width: 18px;
+            height: 2px;
+            background: var(--border);
+            flex: none;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 30px;
+        }
+
+        .legend p {
+            color: var(--text-mute);
+            font-size: 15px;
+            margin: 0 0 14px;
+        }
+
+        .legend p:last-of-type {
+            margin-bottom: 26px;
+        }
+
+        .btn {
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 11px 18px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-mute);
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            color: var(--text);
+            border-color: var(--teal);
+        }
+
+        .btn.accent {
+            background: var(--teal);
+            border-color: var(--teal);
+            color: #06141a;
+        }
+
+        .btn.accent:hover {
+            background: #56c6da;
+        }
+
+        .btn:disabled {
+            opacity: .5;
+            cursor: default;
+        }
+
+        .lvl__eyebrow {
+            font-family: var(--font-display);
+            color: var(--amber);
+            font-size: 13px;
+            font-weight: 700;
+            margin: 0 0 10px;
+        }
+
+        .lvl__title {
+            font-size: 21px;
+            margin: 0 0 14px;
+        }
+
+        .lvl__prompt {
+            color: var(--text);
+            font-size: 15px;
+            margin: 0 0 22px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            border-radius: 10px;
+            padding: 13px 15px;
+            cursor: pointer;
+            font-family: var(--font-display);
+            font-size: 13px;
+            white-space: pre-wrap;
+            color: var(--text);
+        }
+
+        .option:hover {
+            border-color: var(--teal);
+        }
+
+        .option.selected {
+            border-color: var(--teal);
+            background: var(--teal-dim);
+        }
+
+        textarea.code-editor {
+            width: 100%;
+            min-height: 160px;
+            resize: vertical;
+            background: #0e1120;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            font-family: var(--font-display);
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+
+        textarea.code-editor:focus {
+            outline: none;
+            border-color: var(--teal);
+        }
+
+        .test-results {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 14px 0;
+        }
+
+        .test-row {
+            font-family: var(--font-display);
+            font-size: 12.5px;
+            padding: 8px 11px;
+            border-radius: 8px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-mute);
+        }
+
+        .test-row.pass {
+            color: var(--good);
+            border-color: var(--good);
+            background: var(--good-dim);
+        }
+
+        .test-row.fail {
+            color: var(--danger);
+            border-color: var(--danger);
+            background: var(--danger-dim);
+        }
+
+        .hint-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 4px 0 16px;
+        }
+
+        .hint-box p {
+            background: var(--teal-dim);
+            border: 1px solid var(--teal);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .feedback {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 4px 0 18px;
+            min-height: 20px;
+        }
+
+        .feedback.ok {
+            color: var(--good);
+        }
+
+        .feedback.bad {
+            color: var(--danger);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .final {
+            text-align: center;
+            padding: 10px 0 6px;
+        }
+
+        .final__icon {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            background: var(--amber-dim);
+            border: 2px solid var(--amber);
+        }
+
+        .final__name {
+            font-size: 26px;
+            color: var(--amber);
+            margin: 0 0 8px;
+        }
+
+        .final__score {
+            color: var(--text-mute);
+            font-size: 14px;
+            margin: 0 0 24px;
+        }
+
+        @media (max-width: 560px) {
+            .panel {
+                padding: 22px;
+            }
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        [tabindex]:focus-visible {
+            outline: 2px solid var(--teal);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="wrap">
+
+        <div class="hud">
+            <div class="hud__top">
+                <h1 class="hud__title">🧩 Лабіринт умов</h1>
+                <span class="hud__xp" id="hudXp">0 / 90 XP</span>
+            </div>
+            <ol class="path" id="pathNav"></ol>
+        </div>
+
+        <div class="panel" id="panel"></div>
+
+    </div>
+
+    <script>
+        const LEVELS = [
+            {
+                id: 1, title: "Рівень 1 · Просте запитання", xp: 10, type: "quiz",
+                prompt: "Що виведе console.log(5 > 3);?",
+                options: ["true", "false", "5 > 3", "Помилка виконання"],
+                correct: 0,
+                hints: [
+                    "Оператор > порівнює два значення і завжди повертає логічне значення — true або false.",
+                    "5 дійсно більше за 3 — подумай, яким буде результат цього порівняння."
+                ]
+            },
+            {
+                id: 2, title: "Рівень 2 · Знайти правильну відповідь", xp: 10, type: "quiz",
+                prompt: "Який варіант написаний із правильним синтаксисом умовного оператора в JavaScript?",
+                options: [
+                    "if (age >= 18) {\n  console.log('Дорослий');\n} else {\n  console.log('Дитина');\n}",
+                    "if age >= 18 {\n  console.log('Дорослий');\n} else {\n  console.log('Дитина');\n}",
+                    "if (age >= 18) then {\n  console.log('Дорослий');\n} else {\n  console.log('Дитина');\n}",
+                    "if (age >= 18):\n  console.log('Дорослий')\nelse:\n  console.log('Дитина')"
+                ],
+                correct: 0,
+                hints: [
+                    "В JavaScript умова обов'язково береться в круглі дужки ( ).",
+                    "Ключового слова then і двокрапок : (як у Python) у синтаксисі JS немає."
+                ]
+            },
+            {
+                id: 3, title: "Рівень 3 · Практичне завдання", xp: 20, type: "code",
+                fnName: "isEven",
+                prompt: "Напиши функцію isEven(n), яка повертає рядок 'парне', якщо число парне, і 'непарне' — якщо ні.",
+                starter: "function isEven(n) {\n  // твій код тут\n}",
+                tests: [
+                    { args: [4], expected: "парне" },
+                    { args: [7], expected: "непарне" },
+                    { args: [0], expected: "парне" },
+                    { args: [-3], expected: "непарне" }
+                ],
+                hints: [
+                    "Залишок від ділення на 2 (оператор %) допоможе визначити парність: n % 2 === 0 означає, що число парне.",
+                    "Обгорни перевірку в if / else і поверни (return) потрібний рядок з кожної гілки."
+                ]
+            },
+            {
+                id: 4, title: "Рівень 4 · Розв'яжи проблему", xp: 20, type: "code",
+                fnName: "isPositive",
+                prompt: "У коді нижче є помилка — функція для будь-якого числа повертає 'нуль'. Знайди і виправ її.",
+                starter: "function isPositive(n) {\n  if (n = 0) {\n    return 'нуль';\n  } else if (n > 0) {\n    return 'додатне';\n  } else {\n    return \"від'ємне\";\n  }\n}",
+                tests: [
+                    { args: [0], expected: "нуль" },
+                    { args: [5], expected: "додатне" },
+                    { args: [-5], expected: "від'ємне" }
+                ],
+                hints: [
+                    "Уважно подивись на перше порівняння в дужках — це справді порівняння, чи випадково присвоєння значення?",
+                    "Для порівняння значень в JavaScript використовується === (або ==), а не одинарне =."
+                ]
+            },
+            {
+                id: 5, title: "Рівень 5 · Фінальне завдання", xp: 30, type: "code",
+                fnName: "grade",
+                prompt: "Напиши функцію grade(score), яка через switch повертає оцінку: 90 і більше — 'A', 80-89 — 'B', 70-79 — 'C', 60-69 — 'D', менше 60 — 'F'.",
+                starter: "function grade(score) {\n  // підказка: switch (true) { case score >= 90: return 'A'; ... }\n}",
+                tests: [
+                    { args: [95], expected: "A" },
+                    { args: [82], expected: "B" },
+                    { args: [71], expected: "C" },
+                    { args: [65], expected: "D" },
+                    { args: [40], expected: "F" }
+                ],
+                hints: [
+                    "Звичайний switch(score) перевіряє точний збіг значення, а тут потрібні діапазони — це не одне й те саме.",
+                    "Спробуй конструкцію switch (true) { case score >= 90: return 'A'; case score >= 80: return 'B'; ... } — кожен case тут сам є умовою."
+                ]
+            }
+        ];
+
+        const state = {
+            screen: -1,
+            totalXp: 0,
+            passed: LEVELS.map(() => false),
+            hintIndex: LEVELS.map(() => 0),
+            selectedOption: LEVELS.map(() => null),
+        };
+
+        const panel = document.getElementById("panel");
+        const hudXp = document.getElementById("hudXp");
+        const pathNav = document.getElementById("pathNav");
+
+        function renderPath() {
+            pathNav.innerHTML = "";
+            const nodes = [{ label: "Старт" }, ...LEVELS.map((l, i) => ({ label: "Рівень " + (i + 1) })), { label: "Фінал" }];
+
+            nodes.forEach((node, idx) => {
+                if (idx > 0) {
+                    const conn = document.createElement("span");
+                    conn.className = "connector";
+                    pathNav.appendChild(conn);
+                }
+                const li = document.createElement("li");
+                li.textContent = node.label;
+
+                const levelIdx = idx - 1;
+                let status = "locked";
+                if (idx === 0) status = "clickable-start";
+                else if (idx === nodes.length - 1) status = state.screen === 5 ? "current" : (state.passed.every(Boolean) ? "clickable" : "locked");
+                else {
+                    if (state.passed[levelIdx]) status = "done-clickable";
+                    else if (levelIdx === 0 || state.passed[levelIdx - 1]) status = state.screen === levelIdx ? "current" : "clickable";
+                    else status = "locked";
+                }
+
+                if (status === "current") li.classList.add("is-current");
+                if (status === "done-clickable") { li.classList.add("is-done", "clickable"); li.addEventListener("click", () => showLevel(levelIdx)); }
+                if (status === "clickable") { li.classList.add("clickable"); li.addEventListener("click", () => showLevel(levelIdx)); }
+                if (status === "clickable-start") { li.classList.add("clickable"); li.addEventListener("click", () => showStart()); }
+                if (status === "locked") li.classList.add("is-locked");
+
+                pathNav.appendChild(li);
+            });
+        }
+
+        function renderXp() {
+            hudXp.textContent = state.totalXp + " / 90 XP";
+        }
+
+        function showStart() {
+            state.screen = -1;
+            renderPath();
+            panel.innerHTML = `
+      <div class="legend">
+        <p class="lvl__eyebrow">Легенда квесту</p>
+        <h2 class="lvl__title">Порятунок функції: Лабіринт умов</h2>
+        <p>У ядрі навчальної системи стався збій: функція перевірки даних застрягла в нескінченному циклі помилкових рішень і відмовляється працювати.</p>
+        <p>Щоб відновити її код, потрібно пройти п'ять рівнів Лабіринту умов — на кожному чекає завдання на логіку та умовні оператори. Лише правильні рішення відкривають прохід далі.</p>
+        <button class="btn accent" id="startBtn">Почати проходження →</button>
+      </div>
+    `;
+            document.getElementById("startBtn").addEventListener("click", () => showLevel(0));
+        }
+
+        function showLevel(index) {
+            state.screen = index;
+            renderPath();
+            const level = LEVELS[index];
+
+            if (level.type === "quiz") renderQuizLevel(level, index);
+            else renderCodeLevel(level, index);
+        }
+
+        function renderQuizLevel(level, index) {
+            const already = state.passed[index];
+            panel.innerHTML = `
+      <p class="lvl__eyebrow">+${level.xp} XP · ${level.title}</p>
+      <h2 class="lvl__title">${already ? "✅ Вже пройдено" : "Обери правильну відповідь"}</h2>
+      <p class="lvl__prompt">${level.prompt}</p>
+      <div class="options" id="optionsBox"></div>
+      <div class="hint-box" id="hintBox"></div>
+      <p class="feedback" id="feedback"></p>
+      <div class="actions">
+        ${level.hints ? `<button class="btn" id="hintBtn">Показати підказку</button>` : ""}
+        <button class="btn accent" id="checkBtn">Перевірити відповідь</button>
+        <button class="btn accent" id="nextBtn" ${already ? "" : "hidden"}>Далі →</button>
+      </div>
+    `;
+
+            const optionsBox = document.getElementById("optionsBox");
+            level.options.forEach((opt, i) => {
+                const div = document.createElement("div");
+                div.className = "option" + (state.selectedOption[index] === i ? " selected" : "");
+                div.textContent = opt;
+                div.addEventListener("click", () => {
+                    state.selectedOption[index] = i;
+                    [...optionsBox.children].forEach((c) => c.classList.remove("selected"));
+                    div.classList.add("selected");
+                });
+                optionsBox.appendChild(div);
+            });
+
+            setupHintButton(level, index);
+
+            document.getElementById("checkBtn").addEventListener("click", () => {
+                const feedback = document.getElementById("feedback");
+                if (state.selectedOption[index] === null) {
+                    feedback.textContent = "Спочатку обери один із варіантів.";
+                    feedback.className = "feedback bad";
+                    return;
+                }
+                if (state.selectedOption[index] === level.correct) {
+                    feedback.textContent = "Правильно! Прохід відкрито.";
+                    feedback.className = "feedback ok";
+                    markPassed(index, level.xp);
+                    document.getElementById("nextBtn").hidden = false;
+                } else {
+                    feedback.textContent = "Поки що не так. Спробуй ще раз.";
+                    feedback.className = "feedback bad";
+                }
+            });
+
+            document.getElementById("nextBtn").addEventListener("click", () => goNext(index));
+        }
+
+        function renderCodeLevel(level, index) {
+            const already = state.passed[index];
+            panel.innerHTML = `
+      <p class="lvl__eyebrow">+${level.xp} XP · ${level.title}</p>
+      <h2 class="lvl__title">${already ? "✅ Вже пройдено" : "Виконай завдання"}</h2>
+      <p class="lvl__prompt">${level.prompt}</p>
+      <textarea class="code-editor" id="codeEditor" spellcheck="false">${level.starter}</textarea>
+      <div class="hint-box" id="hintBox"></div>
+      <div class="test-results" id="testResults"></div>
+      <p class="feedback" id="feedback"></p>
+      <div class="actions">
+        ${level.hints ? `<button class="btn" id="hintBtn">Показати підказку</button>` : ""}
+        <button class="btn accent" id="runBtn">Перевірити код</button>
+        <button class="btn accent" id="nextBtn" ${already ? "" : "hidden"}>Далі →</button>
+      </div>
+    `;
+
+            setupHintButton(level, index);
+
+            document.getElementById("runBtn").addEventListener("click", () => {
+                const code = document.getElementById("codeEditor").value;
+                const resultsBox = document.getElementById("testResults");
+                const feedback = document.getElementById("feedback");
+                resultsBox.innerHTML = "";
+
+                let fn;
+                try {
+                    const factory = new Function(code + "\nreturn typeof " + level.fnName + " === 'function' ? " + level.fnName + " : null;");
+                    fn = factory();
+                    if (!fn) throw new Error("Функцію " + level.fnName + "(...) не знайдено. Перевір назву.");
+                } catch (err) {
+                    feedback.textContent = "Помилка в коді: " + err.message;
+                    feedback.className = "feedback bad";
+                    return;
+                }
+
+                let allPass = true;
+                level.tests.forEach((t) => {
+                    const row = document.createElement("div");
+                    try {
+                        const actual = fn(...t.args);
+                        const pass = actual === t.expected;
+                        if (!pass) allPass = false;
+                        row.className = "test-row " + (pass ? "pass" : "fail");
+                        row.textContent = `${level.fnName}(${t.args.join(", ")}) → отримано: ${JSON.stringify(actual)}, очікувалось: ${JSON.stringify(t.expected)} ${pass ? "✅" : "❌"}`;
+                    } catch (err) {
+                        allPass = false;
+                        row.className = "test-row fail";
+                        row.textContent = `${level.fnName}(${t.args.join(", ")}) → помилка виконання: ${err.message} ❌`;
+                    }
+                    resultsBox.appendChild(row);
+                });
+
+                if (allPass) {
+                    feedback.textContent = "Усі перевірки пройдено! Прохід відкрито.";
+                    feedback.className = "feedback ok";
+                    markPassed(index, level.xp);
+                    document.getElementById("nextBtn").hidden = false;
+                } else {
+                    feedback.textContent = "Поки не всі перевірки пройдені — онови код і спробуй ще раз.";
+                    feedback.className = "feedback bad";
+                }
+            });
+
+            document.getElementById("nextBtn").addEventListener("click", () => goNext(index));
+        }
+
+        function setupHintButton(level, index) {
+            if (!level.hints) return;
+            const hintBox = document.getElementById("hintBox");
+            const hintBtn = document.getElementById("hintBtn");
+
+            for (let i = 0; i < state.hintIndex[index]; i++) {
+                const p = document.createElement("p");
+                p.textContent = "💡 " + level.hints[i];
+                hintBox.appendChild(p);
+            }
+            if (state.hintIndex[index] >= level.hints.length) {
+                hintBtn.disabled = true;
+                hintBtn.textContent = "Підказок більше немає";
+            }
+
+            hintBtn.addEventListener("click", () => {
+                const p = document.createElement("p");
+                p.textContent = "💡 " + level.hints[state.hintIndex[index]];
+                hintBox.appendChild(p);
+                state.hintIndex[index] += 1;
+                if (state.hintIndex[index] >= level.hints.length) {
+                    hintBtn.disabled = true;
+                    hintBtn.textContent = "Підказок більше немає";
+                } else {
+                    hintBtn.textContent = "Ще одна підказка";
+                }
+            });
+        }
+
+        function markPassed(index, xp) {
+            if (!state.passed[index]) {
+                state.passed[index] = true;
+                state.totalXp += xp;
+                renderXp();
+            }
+            renderPath();
+        }
+
+        function goNext(index) {
+            if (index + 1 < LEVELS.length) showLevel(index + 1);
+            else showFinal();
+        }
+
+        function showFinal() {
+            state.screen = 5;
+            renderPath();
+
+            let icon = "🎯", name = "Новачок коду";
+            if (state.totalXp >= 70) { icon = "🏆"; name = "Майстер умов"; }
+            else if (state.totalXp >= 50) { icon = "⭐"; name = "Логік-детектив"; }
+
+            panel.innerHTML = `
+      <div class="final">
+        <div class="final__icon">${icon}</div>
+        <p class="lvl__eyebrow">Функцію відновлено</p>
+        <h2 class="final__name">${name}</h2>
+        <p class="final__score">Набрано ${state.totalXp} із 90 балів</p>
+        <button class="btn accent" id="restartBtn">Пройти ще раз</button>
+      </div>
+    `;
+            document.getElementById("restartBtn").addEventListener("click", resetGame);
+        }
+
+        function resetGame() {
+            state.screen = -1;
+            state.totalXp = 0;
+            state.passed = LEVELS.map(() => false);
+            state.hintIndex = LEVELS.map(() => 0);
+            state.selectedOption = LEVELS.map(() => null);
+            renderXp();
+            showStart();
+        }
+
+        renderXp();
+        showStart();
+    </script>
+</body>
+
+</html>
